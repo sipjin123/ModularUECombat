@@ -7,7 +7,6 @@
 #include "GameplayTagContainer.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
-#include "CustomAbilitySystemComponent.h"
 #include "AbilityCharacter.generated.h"
 
 class USpringArmComponent;
@@ -54,9 +53,14 @@ public:
 	UInputAction* LookAction;
 
 	/** Gameplay Ability System */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="GAS", meta = (AllowPrivateAccess="true"))
-	class UCustomAbilitySystemComponent* AbilitySystemComponent;
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; };
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GAS", meta = (AllowPrivateAccess="true"))
+	class UCustomAbilitySystemComponent* CAbilitySystemComponent;
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return CAbilitySystemComponent; };
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Tags)
+	FGameplayTagContainer TagContainer;
+	UFUNCTION()
+	void OnRep_Tags();
 	
 protected:
 	// Called when the game starts or when spawned
@@ -79,7 +83,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
 	/** Function that handles status states based on tags **/
-	void OnInvulnerableTagChanged(FGameplayTag GameplayTag, int NewVal);
+	void OnStatusChanged(FGameplayTag GameplayTag, int NewVal);
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FTagUpdated TagUpdated;

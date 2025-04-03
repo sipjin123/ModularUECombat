@@ -8,6 +8,7 @@
 #include "EnhancedPlayerInput.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 AAbilityCharacter::AAbilityCharacter()
@@ -26,9 +27,28 @@ AAbilityCharacter::AAbilityCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 	
-	AbilitySystemComponent = CreateDefaultSubobject<UCustomAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-	AbilitySystemComponent->SetIsReplicated(true);
-	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
+	CAbilitySystemComponent = CreateDefaultSubobject<UCustomAbilitySystemComponent>(TEXT("CAbilitySystemComponent"));
+	CAbilitySystemComponent->SetIsReplicated(true);
+	CAbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
+}
+
+void AAbilityCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME_CONDITION_NOTIFY(AAbilityCharacter, TagContainer, COND_None, REPNOTIFY_OnChanged);
+}
+
+void AAbilityCharacter::OnRep_Tags()
+{
+	FString RoleLog = UEnum::GetValueAsString(GetLocalRole());
+	UE_LOG(LogTemp, Log, TEXT("%s Tag has been updated"), *RoleLog);
+	int32 iterationVal = 0;
+	for (const FGameplayTag& Tag : TagContainer)
+	{
+		// Log the tag name
+		UE_LOG(LogTemp, Log, TEXT("Tag: %d - %s"), iterationVal, *Tag.ToString());
+		iterationVal++;
+	}
 }
 
 // Called when the game starts or when spawned
@@ -36,10 +56,13 @@ void AAbilityCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	AbilitySystemComponent->RegisterGameplayTagEvent(
-		FGameplayTag::RequestGameplayTag(FName("Status.Stun")),
-		EGameplayTagEventType::NewOrRemoved)
-		.AddUObject(this, &AAbilityCharacter::OnInvulnerableTagChanged);
+	if (CAbilitySystemComponent)
+	{
+		CAbilitySystemComponent->RegisterGameplayTagEvent(
+			FGameplayTag::RequestGameplayTag(FName("Status.Stun")),
+			EGameplayTagEventType::NewOrRemoved)
+			.AddUObject(this, &AAbilityCharacter::OnStatusChanged);
+	}
 }
 
 // Called every frame
@@ -71,9 +94,10 @@ void AAbilityCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	}
 }
 
-void AAbilityCharacter::OnInvulnerableTagChanged(FGameplayTag GameplayTag, int NewVal)
+void AAbilityCharacter::OnStatusChanged(FGameplayTag GameplayTag, int NewVal)
 {
-	TagUpdated.Broadcast(GameplayTag, NewVal);
+	UE_LOG(LogTemp, Error, TEXT("-- Status did Change %d"), NewVal);
+	//TagUpdated.Broadcast(GameplayTag, NewVal);
 }
 
 void AAbilityCharacter::NotifyControllerChanged()

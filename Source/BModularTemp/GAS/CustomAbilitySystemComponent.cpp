@@ -2,10 +2,10 @@
 
 
 #include "CustomAbilitySystemComponent.h"
-
+#include "AbilityCharacter.h"
 
 void UCustomAbilitySystemComponent::NotifyAbilityActivated(const FGameplayAbilitySpecHandle Handle,
-	UGameplayAbility* Ability)
+                                                           UGameplayAbility* Ability)
 {
 	bool NewVal = HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(FName("Status.Invulnerable")));
 	if (GetOwner()->HasAuthority())
@@ -40,6 +40,22 @@ void UCustomAbilitySystemComponent::RemoveTagsInCategory(UAbilitySystemComponent
 		
 		// Notify all clients to sync tag removal
 		Multicast_NotifyTagsRemoved(AbilitySystemComponent, TagsToRemove);
+	}
+}
+
+void UCustomAbilitySystemComponent::AddCustomTag(FGameplayTag NewTag)
+{
+	if (GetOwner()->HasAuthority()) 
+	{
+		
+		UE_LOG(LogTemp, Log, TEXT("YES Authority"));
+		Cast<AAbilityCharacter>(GetOwner())->TagContainer.AddTag(FGameplayTag::RequestGameplayTag(FName("Status.Stun")));
+		GetOwner()->ForceNetUpdate();  // Ensures the tag gets updated on the client side
+	}
+	else
+	{
+		
+		//UE_LOG(LogTemp, Log, TEXT("No Authority"));
 	}
 }
 

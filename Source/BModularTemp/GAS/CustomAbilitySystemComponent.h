@@ -10,10 +10,11 @@
  * 
  */
 UCLASS()
+//UCLASS(BlueprintType)
 class BMODULARTEMP_API UCustomAbilitySystemComponent : public UAbilitySystemComponent
 {
 	GENERATED_BODY()
-	
+
 	virtual void NotifyAbilityActivated(const FGameplayAbilitySpecHandle Handle, UGameplayAbility* Ability) override;
 
 	// Custom code removing tags within a category
@@ -28,4 +29,8 @@ class BMODULARTEMP_API UCustomAbilitySystemComponent : public UAbilitySystemComp
 
 	UFUNCTION(Client, Reliable, BlueprintCallable)
 	void Client_ApplyCooldownByTag(const FGameplayTag TagToUse);
+	
+public:
+	UFUNCTION(BlueprintCallable)
+	void AddCustomTag(FGameplayTag NewTag);
 };
